@@ -1,6 +1,6 @@
-## :railway_car: TRAM 
+## :railway_car: TRAM
 Official implementation for the paper: \
-**TRAM: Global Trajectory and Motion of 3D Humans from in-the-wild Videos**  
+**TRAM: Global Trajectory and Motion of 3D Humans from in-the-wild Videos**
 [Yufu Wang](https://yufu-wang.github.io), [Ziyun Wang](https://ziyunclaudewang.github.io/), [Lingjie Liu](https://lingjie0206.github.io/), [Kostas Daniilidis](https://www.cis.upenn.edu/~kostas/)\
 [[Project Page](https://yufu-wang.github.io/tram4d/)]
 
@@ -14,13 +14,12 @@ Official implementation for the paper: \
 ```Bash
 git clone --recursive https://github.com/yufu-wang/tram
 ```
-2. Creating a new anaconda environment.
+2. Creating a new virtual environment.
 ```Bash
-conda create -n tram python=3.10 -y
-conda activate tram
-bash install.sh
+bash install.sh  # Creates the virtual environment. This will take several minutes to install packages.
+source .venv/bin/activate
 ```
-3. Compile DROID-SLAM. If you encountered difficulty in this step, please refer to its [official release](https://github.com/princeton-vl/DROID-SLAM) for more info. In this project, DROID is modified to support masking. 
+3. Compile DROID-SLAM. If you encountered difficulty in this step, please refer to its [official release](https://github.com/princeton-vl/DROID-SLAM) for more info. In this project, DROID is modified to support masking.
 ```Bash
 cd thirdparty/DROID-SLAM
 python setup.py install
@@ -28,7 +27,7 @@ cd ../..
 ```
 
 ## Prepare data
-Register at [SMPLify](https://smplify.is.tue.mpg.de) and [SMPL](https://smpl.is.tue.mpg.de), whose usernames and passwords will be used by our script to download the SMPL models. In addition, we will fetch trained checkpoints and an example video. Note that thirdparty models have their own licenses. 
+Register at [SMPLify](https://smplify.is.tue.mpg.de) and [SMPL](https://smpl.is.tue.mpg.de), whose usernames and passwords will be used by our script to download the SMPL models. In addition, we will fetch trained checkpoints and an example video. Note that thirdparty models have their own licenses.
 
 Run the following to fetch all models and checkpoints to `data/`
 ```Bash
@@ -40,7 +39,7 @@ This project integrates the complete 4D human system, including tracking, slam, 
 
 ```bash
 # 1. Run Masked Droid SLAM (also detect+track humans in this step)
-python scripts/estimate_camera.py --video "./example_video.mov" 
+python scripts/estimate_camera.py --video "./example_video.mov"
 # -- You can indicate if the camera is static. The algorithm will try to catch it as well.
 python scripts/estimate_camera.py --video "./another_video.mov" --static_camera
 
@@ -72,7 +71,7 @@ We benefit greatly from the following open source works, from which we adapted p
 In addition, the pipeline includes [Detectron2](https://github.com/facebookresearch/detectron2), [Segment-Anything](https://github.com/facebookresearch/segment-anything), and [DEVA-Track-Anything](https://github.com/hkchengrex/Tracking-Anything-with-DEVA).
 
 
-  
+
 ## Citation
 ```bibtex
 @article{wang2024tram,
@@ -82,4 +81,3 @@ In addition, the pipeline includes [Detectron2](https://github.com/facebookresea
   year={2024}
 }
 ```
-

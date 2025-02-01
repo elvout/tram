@@ -1,14 +1,17 @@
-# conda remove -n tram --all -y
-# conda create -n tram python=3.10 -y
-# conda activate tram
+#! /usr/bin/env bash
 
-conda install nvidia/label/cuda-11.8.0::cuda-toolkit -y # you can disable this if you already have cuda-11.8
-conda install pytorch==2.0.0 torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvidia -y
+set -e
+
+[[ ! -d .venv ]] && python3 -m venv .venv
+
+source .venv/bin/activate
+
+pip install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/cu124
 pip install 'git+https://github.com/facebookresearch/detectron2.git@a59f05630a8f205756064244bf5beb8661f96180'
 pip install "git+https://github.com/facebookresearch/pytorch3d.git@stable"
 
-conda install pytorch-scatter -c pyg
-conda install -c conda-forge suitesparse
+pip install torch-scatter -f https://data.pyg.org/whl/torch-2.5.1+cu124.html
+# conda install -c conda-forge suitesparse
 
 pip install pulp
 pip install supervision
@@ -27,6 +30,5 @@ pip install timm==0.6.7
 pip install evo
 pip install pytorch-minimize
 pip install imageio[ffmpeg]
-pip install numpy==1.23
+pip install numpy==1.26.4
 pip install gdown
-
