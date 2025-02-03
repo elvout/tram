@@ -10,13 +10,18 @@ Official implementation for the paper: \
 
 
 ## Installation
+0. Be in a CUDA development environment (this fork targets CUDA 12.4).
 1. Clone this repo with the `--recursive` flag.
 ```Bash
 git clone --recursive https://github.com/yufu-wang/tram
+# If you have already cloned without --recursive:
+git submodule update --init --recursive
 ```
-2. Creating a new virtual environment.
+2. Creating and activate a new virtual environment.
 ```Bash
-bash install.sh  # Creates the virtual environment. This will take several minutes to install packages.
+# Creates the virtual environment if it does not exist already.
+# This will take several minutes to install packages.
+bash install.sh
 source .venv/bin/activate
 ```
 3. Compile DROID-SLAM. If you encountered difficulty in this step, please refer to its [official release](https://github.com/princeton-vl/DROID-SLAM) for more info. In this project, DROID is modified to support masking.

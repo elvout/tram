@@ -32,3 +32,10 @@ pip install pytorch-minimize
 pip install imageio[ffmpeg]
 pip install numpy==1.26.4
 pip install gdown
+
+# chumpy's __init__.py attempts to import types from numpy that were removed in
+# numpy 1.24, which causes an ImportError for newer versions of numpy (which are
+# in turn required by various other packages). There does not appear to be a
+# reason for the import statement. chumpy appears to no longer be maintained, so
+# we'll manually remove the offending import statement.
+perl -0777 -i -p -e "s/from numpy import.+?\n//" .venv/lib/python3.10/site-packages/chumpy/__init__.py
