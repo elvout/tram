@@ -89,7 +89,7 @@ def detect_segment_track(imgfiles, out_path, thresh=0.5, min_size=None,
 
         ### --- SAM ---
         if len(boxes)>0:
-            with autocast():
+            with torch.amp.autocast("cuda"):
                 predictor.set_image(img_cv2, image_format='BGR')
 
                 # multiple boxes
