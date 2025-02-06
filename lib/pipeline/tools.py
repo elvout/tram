@@ -12,6 +12,7 @@ from pycocotools import mask as masktool
 from lib.utils.utils_detectron2 import DefaultPredictor_Lazy
 from detectron2.config import LazyConfig
 from lib.pipeline.deva_track import get_deva_tracker, track_with_mask, flush_buffer
+from lib.pipeline.video_frame_iterator import VideoFrameIterator
 
 
 def video_num_frames(vidfile: str) -> int:
@@ -43,7 +44,7 @@ def video2frames(vidfile, save_folder):
     return count
 
 
-def detect_segment_track(imgfiles, out_path, thresh=0.5, min_size=None,
+def detect_segment_track(video_iterator: VideoFrameIterator, out_path, thresh=0.5, min_size=None,
                          device='cuda', save_vos=True):
     """ A simple pipeline for human detection, segmentation, and tracking. Mainly as input for TRAM.
     Detection: ViTDet.
@@ -64,15 +65,13 @@ def detect_segment_track(imgfiles, out_path, thresh=0.5, min_size=None,
     predictor = SamPredictor(sam)
 
     # DEVA
-    vid_length = len(imgfiles)
+    vid_length = len(video_iterator)
     deva, result_saver = get_deva_tracker(vid_length, out_path)
 
     # Run
     masks_ = []
     boxes_ = []
-    for t, imgpath in enumerate(tqdm.tqdm(imgfiles)):
-        img_cv2 = cv2.imread(imgpath)
-
+    for t, img_cv2 in enumerate(tqdm.tqdm(video_iterator)):
         ### --- Detection ---
         with torch.no_grad():
             with torch.amp.autocast("cuda"):
@@ -119,7 +118,7 @@ def detect_segment_track(imgfiles, out_path, thresh=0.5, min_size=None,
         with torch.amp.autocast("cuda"):
             img_rgb = cv2.cvtColor(img_cv2, cv2.COLOR_BGR2RGB)
             track_with_mask(deva, masks_track, scores_track, img_rgb,
-                            imgpath, result_saver, t, save_vos)
+                            f"{t:06d}.ext", result_saver, t, save_vos)
 
         ### Record full mask and boxes
         mask_bit = masktool.encode(np.asfortranarray(mask > 0))

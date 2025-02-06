@@ -2,21 +2,22 @@ import torch
 from torch.utils.data import Dataset
 from torchvision.transforms import Normalize, ToTensor, Compose
 import numpy as np
-import cv2
 
 from lib.core import constants
 from lib.utils.imutils import crop, boxes_2_cs
+from lib.pipeline.video_frame_iterator import VideoFrameIterator
 
 
 class TrackDataset(Dataset):
     """
     Track Dataset Class - Load images/crops of the tracked boxes.
     """
-    def __init__(self, imgfiles, boxes, crop_size=256, dilate=1.0,
+    def __init__(self, video_iterator: VideoFrameIterator, frames, boxes, crop_size=256, dilate=1.0,
                 img_focal=None, img_center=None, normalization=True):
         super(TrackDataset, self).__init__()
 
-        self.imgfiles = imgfiles
+        self.video_iterator = video_iterator
+        self.frames = frames
         self.crop_size = crop_size
         self.normalization = normalization
         self.normalize_img = Compose([
@@ -33,22 +34,21 @@ class TrackDataset(Dataset):
 
 
     def __len__(self):
-        return len(self.imgfiles)
-    
-    
+        return len(self.frames)
+
+
     def __getitem__(self, index):
         item = {}
-        imgfile = self.imgfiles[index]
         scale = self.scales[index] * self.box_dilate
         center = self.centers[index]
         img_focal = self.img_focal
         img_center = self.img_center
 
-        img = cv2.imread(imgfile)[:,:,::-1]
-        img_crop = crop(img, center, scale, 
-                        [self.crop_size, self.crop_size], 
+        img = self.video_iterator[self.frames[index]][:, :, ::-1]
+        img_crop = crop(img, center, scale,
+                        [self.crop_size, self.crop_size],
                         rot=0).astype('uint8')
-    
+
         if self.normalization:
             img_crop = self.normalize_img(img_crop)
         else:
@@ -81,5 +81,3 @@ class TrackDataset(Dataset):
         h, w = orig_shape
         center = np.array([w/2., h/2.])
         return center
-
-

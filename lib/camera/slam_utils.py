@@ -11,6 +11,9 @@ import evo.main_ape as main_ape
 from evo.core.metrics import PoseRelation
 from torchvision.transforms import Resize
 
+from lib.pipeline.video_frame_iterator import VideoFrameIterator
+
+
 # Some default settings for DROID-SLAM
 parser = argparse.ArgumentParser()
 parser.add_argument("--imagedir", type=str, help="path to image directory")
@@ -43,34 +46,28 @@ slam_args.upsample = True
 slam_args.disable_vis = True
 
 
-def est_calib(imagedir):
+def est_calib(video_iterator: VideoFrameIterator):
     """ Roughly estimate intrinsics by image dimensions """
-    imgfiles = sorted(glob(f'{imagedir}/*.jpg'))
-    image = cv2.imread(imgfiles[0])
-
-    h0, w0, _ = image.shape
+    h0 = video_iterator.frame_height
+    w0 = video_iterator.frame_width
     focal = np.max([h0, w0])
     cx, cy = w0/2., h0/2.
     calib = [focal, focal, cx, cy]
     return calib
 
 
-def get_dimention(imagedir):
+def get_dimention(video_iterator: VideoFrameIterator):
     """ Get proper image dimension for DROID """
-    imgfiles = sorted(glob(f'{imagedir}/*.jpg'))
-    image = cv2.imread(imgfiles[0])
-
-    h0, w0, _ = image.shape
+    h0 = video_iterator.frame_height
+    w0 = video_iterator.frame_width
     h1 = int(h0 * np.sqrt((384 * 512) / (h0 * w0)))
     w1 = int(w0 * np.sqrt((384 * 512) / (h0 * w0)))
 
-    image = cv2.resize(image, (w1, h1))
-    image = image[:h1-h1%8, :w1-w1%8]
-    H, W, _ = image.shape
+    H, W = h1 - h1 % 8, w1 - w1 % 8
     return H, W
 
 
-def image_stream(imagedir, calib, stride=1, max_frame=None):
+def image_stream(video_iterator: VideoFrameIterator, calib, stride=1, max_frame=None):
     """ Image generator for DROID """
     fx, fy, cx, cy = calib[:4]
 
@@ -80,13 +77,11 @@ def image_stream(imagedir, calib, stride=1, max_frame=None):
     K[1,1] = fy
     K[1,2] = cy
 
-    image_list = sorted(glob(f'{imagedir}/*.jpg'))
-    image_list = image_list[::stride]
-    if max_frame is not None:
-        image_list = image_list[:max_frame]
+    video_iterator.reset(stride)
+    for t, image in enumerate(video_iterator):
+        if max_frame is not None and t >= max_frame:
+            return
 
-    for t, imfile in enumerate(image_list):
-        image = cv2.imread(imfile)
         if len(calib) > 4:
             image = cv2.undistort(image, K, calib[4:])
 
@@ -105,12 +100,12 @@ def image_stream(imagedir, calib, stride=1, max_frame=None):
         yield t, image[None], intrinsics
 
 
-def preprocess_masks(img_folder, masks):
+def preprocess_masks(video_iterator: VideoFrameIterator, masks):
     """ Resize masks for masked droid """
-    H, W = get_dimention(img_folder)
+    H, W = get_dimention(video_iterator)
     resize_1 = Resize((H, W), antialias=True)
     resize_2 = Resize((H//8, W//8), antialias=True)
-    
+
     img_msks = []
     for i in range(0, len(masks), 500):
         m = resize_1(masks[i:i+500])
@@ -131,7 +126,7 @@ def eval_slam(traj_est, cam_t, cam_q, return_traj=True, correct_scale=False, ali
     tstamps = np.array([i for i in range(len(traj_est))], dtype=np.float32)
 
     traj_est = PoseTrajectory3D(
-        positions_xyz=traj_est[:,:3], 
+        positions_xyz=traj_est[:,:3],
         orientations_quat_wxyz=traj_est[:,3:],
         timestamps=tstamps)
 
@@ -141,13 +136,13 @@ def eval_slam(traj_est, cam_t, cam_q, return_traj=True, correct_scale=False, ali
         timestamps=tstamps)
 
     traj_ref, traj_est = sync.associate_trajectories(traj_ref, traj_est)
-    result = main_ape.ape(traj_ref, traj_est, est_name='traj', 
+    result = main_ape.ape(traj_ref, traj_est, est_name='traj',
         pose_relation=PoseRelation.translation_part, align=align, align_origin=align_origin,
         correct_scale=correct_scale)
-    
+
     stats = result.stats
 
     if return_traj:
         return stats, traj_ref, traj_est
-    
+
     return stats

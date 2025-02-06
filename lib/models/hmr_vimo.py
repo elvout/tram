@@ -8,6 +8,7 @@ from torch.utils.data import default_collate
 from lib.utils.geometry import perspective_projection
 from lib.utils.geometry import rot6d_to_rotmat_hmr2 as rot6d_to_rotmat
 from lib.datasets.track_dataset import TrackDataset
+from lib.pipeline.video_frame_iterator import VideoFrameIterator
 
 from .vit import vit_huge
 from .modules import *
@@ -128,7 +129,7 @@ class HMR_VIMO(nn.Module):
 
     def inference(
         self,
-        imgfiles,
+        video_iterator: VideoFrameIterator,
         boxes,
         img_focal=None,
         img_center=None,
@@ -136,14 +137,11 @@ class HMR_VIMO(nn.Module):
         frame=None,
         device="cuda",
     ):
-        nfile = len(imgfiles)
+        nfile = len(video_iterator)
         if valid is None:
             valid = np.ones(nfile, dtype=bool)
         if frame is None:
             frame = np.arange(nfile)
-
-        if isinstance(imgfiles, list):
-            imgfiles = np.array(imgfiles)
 
         frame = frame[valid]
         boxes = boxes[valid]
@@ -160,9 +158,12 @@ class HMR_VIMO(nn.Module):
         frame = []
 
         for frame_ck, boxes_ck in zip(frame_chunks, boxes_chunks):
-            img_ck = imgfiles[frame_ck]
             results = self.inference_chunk(
-                img_ck, boxes_ck, img_focal=img_focal, img_center=img_center
+                video_iterator,
+                frame_ck,
+                boxes_ck,
+                img_focal=img_focal,
+                img_center=img_center,
             )
 
             pred_cam.append(results["pred_cam"])
@@ -183,9 +184,10 @@ class HMR_VIMO(nn.Module):
 
         return results
 
-    def inference_chunk(self, imgfiles, boxes, img_focal, img_center, device="cuda"):
+    def inference_chunk(self, video_iterator: VideoFrameIterator, frame_ck, boxes, img_focal, img_center, device="cuda"):
         db = TrackDataset(
-            imgfiles,
+            video_iterator,
+            frame_ck,
             boxes,
             img_focal=img_focal,
             img_center=img_center,
