@@ -19,7 +19,7 @@ pip install supervision
 pip install open3d
 pip install opencv-python
 pip install loguru
-pip install chumpy
+pip install git+https://github.com/mattloper/chumpy
 pip install einops
 pip install plyfile
 pip install pyrender
@@ -32,6 +32,8 @@ pip install pytorch-minimize
 pip install imageio[ffmpeg]
 pip install numpy==1.26.4
 pip install gdown
+pip install openpyxl
+# pip install git+https://github.com/princeton-vl/lietorch.git
 
 # chumpy's __init__.py attempts to import types from numpy that were removed in
 # numpy 1.24, which causes an ImportError for newer versions of numpy (which are

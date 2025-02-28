@@ -11,7 +11,7 @@ from pycocotools import mask as masktool
 
 from lib.pipeline import video2frames, detect_segment_track, visualize_tram
 from lib.pipeline.tools import VideoFrameIterator
-from lib.camera import run_metric_slam, calibrate_intrinsics
+from lib.camera import run_metric_slam, calibrate_intrinsics, align_cam_to_world
 
 
 parser = argparse.ArgumentParser()
@@ -62,12 +62,16 @@ cam_int, is_static = calibrate_intrinsics(
 cam_R, cam_T = run_metric_slam(
     video_iterator.reset(), masks=masks, calib=cam_int, is_static=is_static
 )
+wd_cam_R, wd_cam_T, spec_f = align_cam_to_world(video_iterator[0], cam_R, cam_T)
 
 camera = {
     "pred_cam_R": cam_R.numpy(),
     "pred_cam_T": cam_T.numpy(),
+    "world_cam_R": wd_cam_R.numpy(),
+    "world_cam_T": wd_cam_T.numpy(),
     "img_focal": cam_int[0],
     "img_center": cam_int[2:],
+    "spec_focal": spec_f,
 }
 
 np.save(f"{seq_folder}/camera.npy", camera)
