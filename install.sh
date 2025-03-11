@@ -34,7 +34,7 @@ pip install imageio[ffmpeg]
 pip install numpy==1.26.4
 pip install gdown
 pip install openpyxl
-# pip install git+https://github.com/princeton-vl/lietorch.git
+pip install git+https://github.com/princeton-vl/lietorch.git
 
 # chumpy's __init__.py attempts to import types from numpy that were removed in
 # numpy 1.24, which causes an ImportError for newer versions of numpy (which are
