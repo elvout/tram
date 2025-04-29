@@ -8,8 +8,12 @@ data/smpl/SMPL_*.pkl
 *.mov
 *.mp4
 example_video/
-results/
 .venv/
+
+logs*/
+results*/
+*.tar.zst
+*.xxh3
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
