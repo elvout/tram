@@ -56,22 +56,48 @@ print("Masked Metric SLAM ...")
 masks = np.array([masktool.decode(m) for m in masks_])
 masks = torch.from_numpy(masks)
 
-cam_int, is_static = calibrate_intrinsics(
-    video_iterator.reset(), masks, is_static=args.static_camera
-)
-cam_R, cam_T = run_metric_slam(
-    video_iterator.reset(), masks=masks, calib=cam_int, is_static=is_static
-)
-wd_cam_R, wd_cam_T, spec_f = align_cam_to_world(video_iterator[0], cam_R, cam_T)
+
+if "view0" in file:
+    cam_int = np.array([710.62554881, 710.62554881, 444.37104887, 430.25012966])
+    wd_cam_R = np.array(
+        [
+            [-0.2450574, -0.5193881, 0.81864698],
+            [-0.05823683, -0.83498304, -0.54718533],
+            [0.96775789, -0.18176722, 0.17437126],
+        ],
+        dtype=np.float32,
+    )
+    wd_cam_T = np.array([-5.11936086, 2.690522, -1.40115835], dtype=np.float32)
+elif "view1" in file:
+    cam_int = np.array([616.28204913, 616.28204913, 502.23346886, 198.48731488])
+    wd_cam_R = np.array(
+        [
+            [0.49669883, 0.27060344, -0.82465996],
+            [-0.05658147, -0.93803645, -0.34188617],
+            [-0.86607668, 0.21647493, -0.45061047],
+        ],
+        dtype=np.float32,
+    )
+    wd_cam_T = np.array([4.31512223, 2.46121383, 1.05645912], dtype=np.float32)
+# else:
+#     cam_int, is_static = calibrate_intrinsics(
+#         video_iterator.reset(), masks, is_static=args.static_camera
+#     )
+#     cam_R, cam_T = run_metric_slam(
+#         video_iterator.reset(), masks=masks, calib=cam_int, is_static=is_static
+#     )
+#     wd_cam_R, wd_cam_T, spec_f = align_cam_to_world(video_iterator[0], cam_R, cam_T)
 
 camera = {
-    "pred_cam_R": cam_R.numpy(),
-    "pred_cam_T": cam_T.numpy(),
-    "world_cam_R": wd_cam_R.numpy(),
-    "world_cam_T": wd_cam_T.numpy(),
+    # "pred_cam_R": cam_R.numpy(),
+    # "pred_cam_T": cam_T.numpy(),
+    # "world_cam_R": wd_cam_R.numpy(),
+    # "world_cam_T": wd_cam_T.numpy(),
+    "world_cam_R": np.tile(wd_cam_R[np.newaxis], (len(video_iterator), 1, 1)),
+    "world_cam_T": np.tile(wd_cam_T[np.newaxis], (len(video_iterator), 1)),
     "img_focal": cam_int[0],
     "img_center": cam_int[2:],
-    "spec_focal": spec_f,
+    # "spec_focal": spec_f,
 }
 
 np.save(f"{seq_folder}/camera.npy", camera)
